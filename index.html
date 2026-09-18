@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Workout Tracker A-C</title>
+<style>
+:root{
+  --bg:#f3f4f6; --card:#fff; --ink:#111827; --muted:#6b7280;
+  --line:#e5e7eb; --dark:#111827; --accent:#2563eb; --good:#15803d;
+  --danger:#b91c1c; --radius:16px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{position:sticky;top:0;z-index:10;background:var(--dark);color:#fff;padding:14px 14px 12px}
+header h1{font-size:20px;margin:0 0 3px}
+header p{margin:0;color:#d1d5db;font-size:12px}
+main{max-width:680px;margin:0 auto;padding:12px 12px 96px}
+.nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.nav button,.primary,.secondary{border:0;border-radius:12px;padding:12px 8px;font-weight:700;font-size:14px}
+.nav button{background:#e5e7eb;color:#111827}
+.nav button.active{background:var(--accent);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin:10px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card h2{font-size:17px;margin:0 0 3px}
+.card .sub{font-size:12px;color:var(--muted);margin-bottom:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
+input,select{width:100%;font-size:16px;padding:11px 10px;border:1px solid #d1d5db;border-radius:10px;background:#fff}
+.exercise{border-top:1px solid var(--line);padding-top:13px;margin-top:13px}
+.exercise:first-child{border-top:0;padding-top:0;margin-top:0}
+.exercise .name{font-weight:750;font-size:15px}
+.exercise .target{font-size:12px;color:var(--muted);margin:2px 0 8px}
+.exercise-grid{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:7px}
+.exercise-grid input{font-size:15px;padding:10px 7px;text-align:center}
+.notes{margin-top:8px}
+.primary{width:100%;background:var(--accent);color:#fff}
+.secondary{width:100%;background:#eef2ff;color:#1e3a8a}
+.actions{display:grid;gap:8px;margin-top:12px}
+.small{font-size:11px;color:var(--muted)}
+.stat{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.stat:last-child{border-bottom:0}
+.stat strong{font-size:18px}
+.badge{display:inline-block;padding:4px 8px;background:#ecfdf5;color:var(--good);border-radius:999px;font-size:11px;font-weight:700}
+footer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:8px 12px calc(8px + env(safe-area-inset-bottom));z-index:10}
+.footer-inner{max-width:680px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.hidden{display:none}
+.success{color:var(--good);font-weight:700;font-size:13px}
+.danger{color:var(--danger)}
+@media (min-width:650px){
+  main{padding-top:18px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Workout Tracker A–C</h1>
+  <p>Strength + BodyCombat | Goal: 96 → 80 kg</p>
+</header>
+
+<main>
+  <section id="home">
+    <div class="card">
+      <h2>Today</h2>
+      <div class="sub">Choose your workout and log your session.</div>
+      <div class="nav">
+        <button class="active" data-view="A">Workout A</button>
+        <button data-view="B">Workout B</button>
+        <button data-view="C">Workout C</button>
+      </div>
+      <div id="quickSummary"></div>
+    </div>
+
+    <div class="card">
+      <h2>Body Progress</h2>
+      <div class="grid2">
+        <div><label>Current weight (kg)</label><input id="currentWeight" type="number" step="0.1" inputmode="decimal"></div>
+        <div><label>Waist (cm)</label><input id="waist" type="number" step="0.1" inputmode="decimal"></div>
+      </div>
+      <div class="actions">
+        <button class="secondary" onclick="saveBody()">Save body check-in</button>
+        <div id="bodyMsg" class="small"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Progress</h2>
+      <div id="stats"></div>
+    </div>
+  </section>
+
+  <section id="workout" class="hidden">
+    <div class="card">
+      <h2 id="workoutTitle"></h2>
+      <div class="sub" id="workoutFocus"></div>
+      <div class="grid2">
+        <div><label>Date</label><input id="sessionDate" type="date"></div>
+        <div><label>Week</label><input id="sessionWeek" type="number" min="1" max="52" value="1"></div>
+      </div>
+    </div>
+
+    <div class="card" id="exerciseList"></div>
+
+    <div class="card">
+      <h2>Session notes</h2>
+      <textarea id="sessionNotes" rows="4" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px;font:inherit" placeholder="How did the workout feel? Any pain, fatigue, or wins?"></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="primary" onclick="saveWorkout()">Save workout</button>
+      <button class="secondary" onclick="clearWorkout()">Clear current form</button>
+      <div id="saveMsg"></div>
+    </div>
+  </section>
+
+  <section id="history" class="hidden">
+    <div class="card">
+      <h2>Workout History</h2>
+      <div class="sub">Your latest saved sessions.</div>
+      <div id="historyList"></div>
+    </div>
+    <div class="card">
+      <h2>Body Check-ins</h2>
+      <div id="bodyHistory"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <button class="secondary" onclick="showHome()">Home</button>
+    <button class="secondary" onclick="showHistory()">History</button>
+  </div>
+</footer>
+
+<script>
+const workouts = {
+  A:{
+    title:"Workout A",
+    focus:"Squat + horizontal push/pull + posterior chain",
+    exercises:[
+      ["Goblet Squat","3 × 8–12","12 kg"],
+      ["DB Romanian Deadlift","3 × 8–12","12 kg/hand"],
+      ["DB Floor Press","3 × 8–12","7.5 kg/hand"],
+      ["Lat Pulldown / Assisted Pull-up","3 × 8–12","Light–moderate"],
+      ["1-Arm DB Row","2 × 10–12 / side","10 kg"],
+      ["Farmer Carry","3 × 30–45 sec","12 kg/hand"],
+      ["Plank","2–3 × 20–40 sec","Bodyweight"]
+    ]
+  },
+  B:{
+    title:"Workout B",
+    focus:"Hinge + single-leg + overhead push/pull + core stability",
+    exercises:[
+      ["KB/DB Deadlift","3 × 8–12","16 kg total"],
+      ["Reverse Lunge","3 × 8–10 / leg","Bodyweight"],
+      ["DB Overhead Press","3 × 8–12","5 kg/hand"],
+      ["1-Arm DB Row","3 × 10–12 / side","10 kg"],
+      ["Glute Bridge March","3 × 10–12 / side","Bodyweight"],
+      ["Dead Bug","2–3 × 8–12 / side","Bodyweight"]
+    ]
+  },
+  C:{
+    title:"Workout C",
+    focus:"Full-body volume + vertical pull + direct abs",
+    exercises:[
+      ["DB/KB Sumo Squat","3 × 10–12","16 kg total"],
+      ["DB Romanian Deadlift","3 × 10–12","10–12 kg/hand"],
+      ["Push-ups","3 × 6–12","Bodyweight"],
+      ["Lat Pulldown / Assisted Pull-up","3 × 8–12","Light–moderate"],
+      ["DB Lateral Raise","2 × 10–15","3–5 kg/hand"],
+      ["Leg Raise","2–3 × 8–12","Bodyweight"],
+      ["Bird Dog","2–3 × 8–12 / side","Bodyweight"]
+    ]
+  }
+};
+
+let current = localStorage.getItem("currentWorkout") || "A";
+let sessions = JSON.parse(localStorage.getItem("sessions") || "[]");
+let bodyLogs = JSON.parse(localStorage.getItem("bodyLogs") || "[]");
+
+function today(){
+  const d=new Date(); const off=d.getTimezoneOffset();
+  return new Date(d.getTime()-off*60000).toISOString().slice(0,10);
+}
+document.getElementById("sessionDate").value=today();
+
+function fmtDate(s){
+  if(!s) return "";
+  const d=new Date(s+"T00:00:00");
+  return d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
+}
+function showHome(){
+  document.getElementById("home").classList.remove("hidden");
+  document.getElementById("workout").classList.add("hidden");
+  document.getElementById("history").classList.add("hidden");
+  renderHome();
+}
+function showHistory(){
+  document.getElementById("home").classList.add("hidden");
+  document.getElementById("workout").classList.add("hidden");
+  document.getElementById("history").classList.remove("hidden");
+  renderHistory();
+}
+function showWorkout(w){
+  current=w; localStorage.setItem("currentWorkout",w);
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===w));
+  document.getElementById("home").classList.add("hidden");
+  document.getElementById("history").classList.add("hidden");
+  document.getElementById("workout").classList.remove("hidden");
+  document.getElementById("saveMsg").innerHTML="";
+  renderWorkout();
+}
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>showWorkout(b.dataset.view));
+
+function renderHome(){
+  const count=sessions.length;
+  const byA=sessions.filter(x=>x.workout==="A").length;
+  const byB=sessions.filter(x=>x.workout==="B").length;
+  const byC=sessions.filter(x=>x.workout==="C").length;
+  const latest=sessions[0];
+  document.getElementById("quickSummary").innerHTML=
+    `<div class="stat"><span>Total strength sessions</span><strong>${count}</strong></div>
+     <div class="stat"><span>A / B / C</span><strong>${byA} / ${byB} / ${byC}</strong></div>
+     <div class="stat"><span>Last session</span><span>${latest?fmtDate(latest.date)+" • "+latest.workout:"None yet"}</span></div>`;
+  const cw=bodyLogs.length?bodyLogs[0].weight:"";
+  const wz=bodyLogs.length?bodyLogs[0].waist:"";
+  document.getElementById("currentWeight").value=cw;
+  document.getElementById("waist").value=wz;
+  const start=96, goal=80;
+  const currentW=parseFloat(cw);
+  const lost=Number.isFinite(currentW)?(start-currentW):0;
+  const pct=Math.max(0,Math.min(100,(lost/(start-goal))*100));
+  document.getElementById("stats").innerHTML=
+    `<div class="stat"><span>Start</span><strong>96 kg</strong></div>
+     <div class="stat"><span>Goal</span><strong>80 kg</strong></div>
+     <div class="stat"><span>Current</span><strong>${Number.isFinite(currentW)?currentW.toFixed(1)+" kg":"—"}</strong></div>
+     <div class="stat"><span>Progress</span><strong>${Number.isFinite(currentW)?pct.toFixed(0)+"%":"—"}</strong></div>`;
+}
+function renderWorkout(){
+  const w=workouts[current];
+  document.getElementById("workoutTitle").textContent=w.title;
+  document.getElementById("workoutFocus").textContent="Focus: "+w.focus;
+  const list=document.getElementById("exerciseList");
+  list.innerHTML="";
+  w.exercises.forEach((e,i)=>{
+    const wrap=document.createElement("div");
+    wrap.className="exercise";
+    wrap.innerHTML=`
+      <div class="name">${i+1}. ${e[0]}</div>
+      <div class="target">${e[1]} • Start: ${e[2]}</div>
+      <div class="exercise-grid">
+        <div><label>Weight</label><input data-f="${i}" data-k="weight" type="text" inputmode="decimal" placeholder="kg"></div>
+        <div><label>Set 1</label><input data-f="${i}" data-k="s1" type="number" inputmode="numeric" placeholder="reps"></div>
+        <div><label>Set 2</label><input data-f="${i}" data-k="s2" type="number" inputmode="numeric" placeholder="reps"></div>
+      </div>
+      <div class="exercise-grid" style="margin-top:7px;grid-template-columns:1fr 1fr;">
+        <div><label>Set 3</label><input data-f="${i}" data-k="s3" type="number" inputmode="numeric" placeholder="reps"></div>
+        <div><label>RIR</label><input data-f="${i}" data-k="rir" type="number" min="0" max="5" inputmode="numeric" placeholder="2"></div>
+      </div>`;
+    list.appendChild(wrap);
+  });
+}
+function saveWorkout(){
+  const w=workouts[current];
+  const exercises=[];
+  document.querySelectorAll(".exercise").forEach((row)=>{
+    const vals={};
+    row.querySelectorAll("input").forEach(inp=>vals[inp.dataset.k]=inp.value);
+    exercises.push(vals);
+  });
+  const rec={
+    id:Date.now(), workout:current,
+    date:document.getElementById("sessionDate").value||today(),
+    week:document.getElementById("sessionWeek").value||1,
+    notes:document.getElementById("sessionNotes").value,
+    exercises
+  };
+  sessions.unshift(rec);
+  localStorage.setItem("sessions",JSON.stringify(sessions));
+  document.getElementById("saveMsg").innerHTML='<div class="success">Saved ✓</div>';
+}
+function clearWorkout(){
+  document.getElementById("sessionNotes").value="";
+  document.getElementById("sessionDate").value=today();
+  document.querySelectorAll("#exerciseList input").forEach(i=>i.value="");
+  document.getElementById("saveMsg").textContent="";
+}
+function saveBody(){
+  const weight=parseFloat(document.getElementById("currentWeight").value);
+  const waist=parseFloat(document.getElementById("waist").value);
+  if(!Number.isFinite(weight) && !Number.isFinite(waist)){
+    document.getElementById("bodyMsg").textContent="Enter a weight or waist measurement.";
+    return;
+  }
+  bodyLogs.unshift({date:today(),weight:Number.isFinite(weight)?weight:null,waist:Number.isFinite(waist)?waist:null});
+  localStorage.setItem("bodyLogs",JSON.stringify(bodyLogs));
+  document.getElementById("bodyMsg").innerHTML='<span class="success">Check-in saved ✓</span>';
+  renderHome();
+}
+function renderHistory(){
+  const h=document.getElementById("historyList");
+  if(!sessions.length) h.innerHTML='<div class="small">No workouts saved yet.</div>';
+  else h.innerHTML=sessions.slice(0,15).map(s=>`
+    <div class="stat">
+      <span><b>${s.workout}</b> • ${fmtDate(s.date)}<br><span class="small">Week ${s.week}</span></span>
+      <span class="badge">Saved</span>
+    </div>`).join("");
+  const b=document.getElementById("bodyHistory");
+  if(!bodyLogs.length) b.innerHTML='<div class="small">No body check-ins yet.</div>';
+  else b.innerHTML=bodyLogs.slice(0,12).map(x=>`
+    <div class="stat"><span>${fmtDate(x.date)}</span><span><b>${x.weight??"—"} kg</b> • ${x.waist??"—"} cm</span></div>
+  `).join("");
+}
+renderHome();
+renderWorkout();
+</script>
+</body>
+</html>
